@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "Shelly public landing page and Vercel serverless API",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "echo \"Run: npx vercel dev --listen 3100\"",
+    "serve:local": "node local-dev-server.js",
     "build": "echo \"No build step required\"",
     "check": "echo \"No typecheck configured\""
   }
