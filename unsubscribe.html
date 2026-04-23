@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shelly | Unsubscribe</title>
+    <meta name="description" content="Unsubscribe from Shelly emails." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/public/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar" style="grid-template-columns:1fr;max-width:760px;">
+        <div>
+          <div class="eyebrow">Shelly</div>
+          <h1>Unsubscribe from Shelly.</h1>
+          <p class="lede">
+            If you do not want future digest emails, confirm once below and we will remove you from the list.
+          </p>
+        </div>
+      </header>
+
+      <main class="grid" style="grid-template-columns:1fr;max-width:760px;">
+        <section class="card">
+          <h2>Confirm removal</h2>
+          <form id="unsubscribe-form" class="form">
+            <input id="unsubscribe-token" type="hidden" name="token" />
+            <input id="unsubscribe-website" name="website" type="text" autocomplete="off" tabindex="-1" class="hp" />
+            <button type="submit">Unsubscribe me</button>
+            <p id="unsubscribe-status" class="status"></p>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const form = document.getElementById("unsubscribe-form");
+      const tokenInput = document.getElementById("unsubscribe-token");
+      const websiteInput = document.getElementById("unsubscribe-website");
+      const status = document.getElementById("unsubscribe-status");
+
+      function setStatus(message, type) {
+        status.textContent = message;
+        status.className = `status${type ? ` ${type}` : ""}`;
+      }
+
+      async function postJson(path, payload) {
+        const response = await fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        return { response, data };
+      }
+
+      async function submitUnsubscribe() {
+        const token = tokenInput.value.trim();
+        const website = websiteInput.value.trim();
+
+        if (!token) {
+          setStatus("This unsubscribe link is incomplete.", "err");
+          return;
+        }
+
+        setStatus("Removing you from the list…", "");
+        try {
+          const { response, data } = await postJson("/api/unsubscribe", { token, website });
+          if (!response.ok) {
+            setStatus(data.message || "Unsubscribe failed.", "err");
+            return;
+          }
+          setStatus(data.message || "You have been unsubscribed.", "ok");
+          form.querySelector("button").disabled = true;
+        } catch {
+          setStatus("Network error. Please try again.", "err");
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || "";
+      if (token) {
+        tokenInput.value = token;
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submitUnsubscribe();
+      });
+
+      if (token) {
+        submitUnsubscribe();
+      } else {
+        setStatus("Open the unsubscribe link from your email.", "");
+      }
+    </script>
+  </body>
+</html>

@@ -56,15 +56,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (method === "GET" && url === "/style.css") {
+  if (method === "GET" && (url === "/style.css" || url === "/public/style.css")) {
     const css = await readFile(path.join(ROOT, "public/style.css"), "utf8");
     sendText(res, 200, css, "text/css; charset=utf-8");
     return;
   }
 
-  if (method === "GET" && url === "/app.js") {
+  if (method === "GET" && (url === "/app.js" || url === "/public/app.js")) {
     const js = await readFile(path.join(ROOT, "public/app.js"), "utf8");
     sendText(res, 200, js, "application/javascript; charset=utf-8");
+    return;
+  }
+
+  if (method === "GET" && url.startsWith("/unsubscribe")) {
+    const html = await readFile(path.join(ROOT, "unsubscribe.html"), "utf8");
+    sendText(res, 200, html, "text/html; charset=utf-8");
     return;
   }
 
@@ -88,6 +94,20 @@ const server = http.createServer(async (req, res) => {
       const result = await forward("feedback", {
         email: body?.email,
         feedback: body?.feedback,
+        website: body?.website
+      });
+      sendJson(res, result.statusCode, result.body);
+    } catch {
+      sendJson(res, 400, { message: "Invalid request" });
+    }
+    return;
+  }
+
+  if (method === "POST" && url === "/api/unsubscribe") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await forward("unsubscribe", {
+        token: body?.token,
         website: body?.website
       });
       sendJson(res, result.statusCode, result.body);
